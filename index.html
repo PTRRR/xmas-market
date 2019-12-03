@@ -1,0 +1,86 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="src/index.js" defer></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 40px;
+    }
+
+    nav {
+      cursor: pointer;
+      position: fixed;
+      z-index: 10;
+      top: 10px;
+      right: 10px;
+      width: 50px;
+      height: 50px;
+      border-radius: 100%;
+      border: solid 2px black;
+      display: flex;
+      justify-content: space-between;
+      flex-direction: column;
+      padding: 13px 10px;
+      background-color: white;
+    }
+
+    nav div {
+      width: 100%;
+      height: 2px;
+      background-color: black;
+    }
+
+    .menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20vh 0;
+    }
+
+    .menu.menu--show {
+      display: flex;
+    }
+
+    .menu div {
+      cursor: pointer;
+    }
+
+    .menu div h5 {
+      margin: 0;
+      font-weight: normal;
+    }
+
+    .gui {
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div></div>
+    <div></div>
+    <div></div>
+  </nav>
+  <div class="menu menu--show"></div>
+  <div class="gui"></div>
+  <canvas></canvas>
+</body>
+</html>
