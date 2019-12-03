@@ -1,13 +1,15 @@
 import socket from './socket'
 import * as geo from './geo'
 import * as quickdraw from './quick-draw'
-import * as fields from './fields'
+import * as spirals from './spirals'
 import { getChunks } from './utils'
+const { NODE_ENV } = process.env
+const DEV_SKETCH = 'spiral11'
 
 const sketches = {
   ...geo,
   ...quickdraw,
-  ...fields
+  ...spirals
 }
 
 async function initialize () {
@@ -18,8 +20,18 @@ async function initialize () {
   canvas.height = height
   const ctx = canvas.getContext('2d')
 
+  let path = null
   const nav = document.querySelector('nav')
   const menu = document.querySelector('.menu')
+  const print = document.querySelector('.print')
+
+  print.addEventListener('click', () => {
+    const chunks = getChunks(path, 300, 3)
+    for (const chunk of chunks) {
+      console.log(chunk)
+      socket.send('path', chunk)
+    }
+  })
 
   nav.addEventListener('click', () => {
     menu.classList.toggle('menu--show')
@@ -34,13 +46,15 @@ async function initialize () {
 
     menuItem.addEventListener('click', async () => {
       menu.classList.remove('menu--show')
-      const path = await value(ctx, width, height) || []
-      const chunks = getChunks(path, 300, 3)
-      for (const chunk of chunks) {
-        console.log(chunk)
-        // socket.send(chunk)
-      }
+      path = await value(ctx, width, height) || []
     })
+
+    setTimeout (async () => {
+      if (NODE_ENV === 'development' && DEV_SKETCH === key) {
+        menu.classList.remove('menu--show')
+        path = await value(ctx, width, height) || []
+      }
+    }, 100)
   }
 }
 
