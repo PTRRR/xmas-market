@@ -10,11 +10,18 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bezier-js": "^2.4.4",
+    "chaikin": "^1.0.0",
+    "cubic-spline": "^3.0.0",
+    "curve-interpolator": "^1.0.5",
     "koa": "^2.11.0",
     "ndjson": "^1.5.0",
     "ndjson-parse": "^1.0.2",
+    "paper-jsdom": "^0.12.3",
     "parcel-bundler": "^1.12.4",
-    "simplex-noise": "^2.4.0"
+    "simplex-noise": "^2.4.0",
+    "simplify-js": "^1.2.3",
+    "simplify-path": "^1.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.7.4",

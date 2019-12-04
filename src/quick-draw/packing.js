@@ -24,7 +24,7 @@ export async function packing (ctx, width, height) {
       const nX = xCoords[0] / 266 * (radius * 2) + offsetX - radius
       const nY = yCoords[0] / 266 * (radius * 2) + offsetY - radius
 
-      const mult = 10
+      const mult = 13
       points.push(nX * mult, nY * mult, 0)
       points.push(nX * mult, nY * mult, 1)
       

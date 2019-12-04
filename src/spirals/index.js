@@ -1,5 +1,7 @@
 import Simplex from 'simplex-noise'
-import { clamp, getPointAtLength, getNormalized, getPathLength, getEllipsePoint, morphPoint } from '../utils'
+import Bezier from 'bezier-js'
+import { clamp, getPointAtLength, getNormalized, getPerpendicular, getPathLength, getEllipsePoint, morphPoint } from '../utils'
+export * from './pathes'
 
 export async function spiral (ctx, width, height) {
   const spiralSize = 20
@@ -299,15 +301,17 @@ export function spiral10 (ctx, width, height) {
 }
 
 export function spiral11 (ctx, width, height) {
+  const path = []
+  const scale = 12.5
   const simplex = new Simplex()
-  const origins = 30
+  const origins = 3
   
   for (let i = 0; i < origins; i++) {
-    const originX = i / origins * width
-    const originY = height
+    const originX = (i / (origins - 1)) * width
+    const originY = height - 10
 
     const trailSegments = 150
-    const trainHeight = height
+    const trainHeight = height - 10
 
     function getPoint (index) {
       const noiseScale = 0.002
@@ -319,6 +323,7 @@ export function spiral11 (ctx, width, height) {
     }
 
     ctx.beginPath()
+    let initTrail = true
     for (let j = 1; j < trailSegments - 1; j++) {
       const { x: lastX, y: lastY } = getPoint(j - 1)
       const { x, y } = getPoint(j)
@@ -332,15 +337,67 @@ export function spiral11 (ctx, width, height) {
       for (let k = 0; k < spiralSegments; k++) {
         const percent = k / spiralSegments
         const angle = percent * Math.PI * 2
-        const rx = 1
-        const ry = 5 + noise * 50 * k * 0.12
+        const rx = 5
+        const ry = (noise + 1) * 50 * k * 0.5
         const lastPoint = getEllipsePoint(lastX, lastY, rx, ry, angle, ellipseRotation)
         const point = getEllipsePoint(x, y, rx, ry, angle, nextEllipseRotation)
         const { x: segmentX, y: segmentY } = morphPoint(lastPoint, point, percent)
-        ctx.lineTo(segmentX, segmentY)  
+        ctx.lineTo(segmentX, segmentY)
+        
+        if (initTrail) {
+          path.push(segmentX * scale, segmentY * scale, 0)
+          initTrail = false
+        }
+
+        path.push(segmentX * scale, segmentY * scale, 1)
       }
     }
     ctx.stroke()
   }
 
+  return path
+}
+
+export function spiral12 (ctx, width, height) {
+  function getRandomPoint () {
+    return {
+      x: Math.random() * width,
+      y: Math.random() * height
+    }
+  }
+
+  const numPoints = 4
+  const points = []
+  for (let i = 0; i < numPoints; i++) {
+    const point = getRandomPoint()
+    points.push(point)
+    ctx.beginPath()
+    ctx.arc(point.x, point.y, 10, 0, Math.PI * 2)
+    ctx.stroke()
+  }
+  
+  for (let i = 1; i < points.length - 1; i++) {
+    const lastPoint = points[i - 1]
+    const point = points[i]
+    const nextPoint = points[i + 1]
+    
+    const dir = getNormalized({ x: point.x - lastPoint.x, y: point.y - lastPoint.y })
+    const perp = getPerpendicular(dir)
+
+    ctx.beginPath()
+    ctx.moveTo(lastPoint.x, lastPoint.y)
+    ctx.lineTo(point.x, point.y)
+    ctx.stroke()
+
+
+    console.log(dir)
+    ctx.beginPath()
+    ctx.moveTo(point.x, point.y)
+    ctx.lineTo(point.x + perp.x * 10, point.y + perp.y * 10)
+    ctx.stroke()
+    // for (const { x, y } of lut) {
+    //   ctx.arc(x, y, 2, 0, Math.PI * 2)
+    //   ctx.lineTo(x, y, 5, 0, Math.PI * 2)
+    // }
+  }
 }

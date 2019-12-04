@@ -4,7 +4,7 @@ import * as quickdraw from './quick-draw'
 import * as spirals from './spirals'
 import { getChunks } from './utils'
 const { NODE_ENV } = process.env
-const DEV_SKETCH = 'spiral11'
+const DEV_SKETCH = 'tube2'
 
 const sketches = {
   ...geo,

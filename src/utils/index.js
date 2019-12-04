@@ -89,4 +89,9 @@ export function morphPoint (point1, point2, amplitude) {
     x: point1.x * (1 - amplitude) + point2.x * amplitude,
     y: point1.y * (1 - amplitude) + point2.y * amplitude
   }
-} 
+}
+
+export function getPerpendicular (vector) {
+  const { x, y } = vector
+  return { x: y, y: -x }
+}
