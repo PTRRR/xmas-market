@@ -115,8 +115,7 @@ async function initialize () {
 
   window.addEventListener('mouseup', event => {
     if (events.onUpCallback) {
-      const coords = getOffsetCoords(event, canvas)
-      events.onUpCallback({ ...coords, canvas })
+      events.onUpCallback({ canvas })
     }
   })
 
@@ -147,10 +146,7 @@ async function initialize () {
 
   window.addEventListener('touchend', event => {
     if (events.onUpCallback) {
-      const { touches } = event
-      const [touch] = touches
-      const coords = getOffsetCoords(touch, canvas)
-      events.onUpCallback({ ...coords, canvas })
+      events.onUpCallback({ canvas })
     }
   })
 

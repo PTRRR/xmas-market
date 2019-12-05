@@ -70,7 +70,6 @@ export function tube2 ({ canvas, ctx, events }) {
         y: y / height
       })
 
-      render()
       drawPath(path)
     }
   })
@@ -89,7 +88,7 @@ export function tube2 ({ canvas, ctx, events }) {
       const { x, y } = scalePoint(point, width, height)
       ctx.lineTo(x, y)
     }
-    ctx.stroke()    
+    ctx.stroke()  
   }
 
   function scalePoint(point, width, height) {
@@ -130,8 +129,8 @@ export function tube2 ({ canvas, ctx, events }) {
           for (let j = 0; j < segments; j++) {
             const t = j / segments
             const angle = t * Math.PI * 2 + i * 0.004 
-            const rx = 5
-            const ry = width * 0.1
+            const rx = 10
+            const ry = width * 0.05
             const lastPoint = getEllipsePoint(lastX, lastY, rx, ry, angle, ellipseRotation)
             const point = getEllipsePoint(x, y, rx, ry, angle, nextEllipseRotation)
             const { x: segmentX, y: segmentY } = morphPoint(lastPoint, point, t)
