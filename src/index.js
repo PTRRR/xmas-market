@@ -24,13 +24,20 @@ async function initialize () {
   const nav = document.querySelector('nav')
   const menu = document.querySelector('.menu')
   const print = document.querySelector('.print')
+  const stop = document.querySelector('.stop')
 
   print.addEventListener('click', () => {
+    document.body.classList.toggle('is-printing')
     const chunks = getChunks(path, 300, 3)
     for (const chunk of chunks) {
       console.log(chunk)
       socket.send('path', chunk)
     }
+  })
+
+  stop.addEventListener('click', () => {
+    document.body.classList.toggle('is-printing')
+    socket.send('stop')
   })
 
   nav.addEventListener('click', () => {
@@ -46,13 +53,17 @@ async function initialize () {
 
     menuItem.addEventListener('click', async () => {
       menu.classList.remove('menu--show')
-      path = await value(ctx, width, height) || []
+      path = await value(ctx, width, height, pathToDraw => {
+        path = pathToDraw
+      }) || []
     })
 
     setTimeout (async () => {
       if (NODE_ENV === 'development' && DEV_SKETCH === key) {
         menu.classList.remove('menu--show')
-        path = await value(ctx, width, height) || []
+        path = await value(ctx, width, height, pathToDraw => {
+          path = pathToDraw
+        }) || []
       }
     }, 100)
   }

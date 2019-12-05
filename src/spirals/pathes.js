@@ -49,18 +49,20 @@ export function tube1 (ctx, width, height) {
   ctx.stroke()
 }
 
-export function tube2 (ctx, width, height) {
+export function tube2 (ctx, width, height, onDraw) {
+  const scale = 13
   const simplex = new Simplex()
   let clicked = false
   let path = []
   const pathes = []
-  window.addEventListener('mousedown', event => {
+  let pathToDraw = []
+
+  window.addEventListener('mousedown', () => {
     clicked = true
-    const { clientX: x, clientY: y } = event
-    const point = { x, y }
-    path.push(point)
-    drawTubes(pathes)
-    drawPath(path)
+  })
+
+  window.addEventListener('touchstart', () => {
+    clicked = true
   })
 
   window.addEventListener('mousemove', event => {
@@ -73,7 +75,25 @@ export function tube2 (ctx, width, height) {
     }
   })
 
+  window.addEventListener('touchmove', event => {
+    if (clicked) {
+      const { touches } = event
+      const [{ clientX: x, clientY: y }] = touches
+      const point = { x, y }
+      path.push(point)
+      drawTubes(pathes)
+      drawPath(path)
+    }
+  })
+
   window.addEventListener('mouseup', () => {
+    clicked = false
+    pathes.push(path)
+    drawTubes(pathes)
+    path = []
+  })
+
+  window.addEventListener('touchend', () => {
     clicked = false
     pathes.push(path)
     drawTubes(pathes)
@@ -89,17 +109,19 @@ export function tube2 (ctx, width, height) {
   }
 
   function drawTubes (pathes) {
+    pathToDraw = []
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, width, height)
     
     for (const path of pathes) {
+      let started = false
       const simplifiedPath = simplify(path.map(({ x, y }) => {
         return [x, y]
       }), 30)
 
       const spline = new CurveInterpolator(simplifiedPath, 0.01)
     
-      const pointsNum = Math.round(spline.length * 0.06)
+      const pointsNum = Math.round(spline.length * 0.2)
       const points = spline.getPoints(pointsNum)
       
       ctx.beginPath()
@@ -112,20 +134,32 @@ export function tube2 (ctx, width, height) {
         const nextEllipseRotation = Math.atan2(nextY - y, nextX - x)
         const noise = simplex.noise2D(i * 0.01, i * 0.01)
     
-        const segments = 100
+        const segments = 10
         for (let j = 0; j < segments; j++) {
           const t = j / segments
-          const angle = t * Math.PI * 2
-          const rx = 20 * (noise * 0.5)
-          const ry = 100 * (noise + 0.5)
+          const angle = t * Math.PI * 2 + i * 0.004 
+          const rx = 50
+          const ry = 300
           const lastPoint = getEllipsePoint(lastX, lastY, rx, ry, angle, ellipseRotation)
           const point = getEllipsePoint(x, y, rx, ry, angle, nextEllipseRotation)
           const { x: segmentX, y: segmentY } = morphPoint(lastPoint, point, t)
           ctx.lineTo(segmentX, segmentY)
+          
+          if (!started) {
+            pathToDraw.push(segmentX * scale, segmentY * scale, 0)
+            started = true
+          }
+          pathToDraw.push(segmentX * scale, segmentY * scale, 1)
         }
       }
     
       ctx.stroke()
     }
+
+    if (onDraw) {
+      onDraw(pathToDraw)
+    }
   }
+
+  return pathToDraw
 }

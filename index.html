@@ -18,7 +18,8 @@
     }
 
     nav,
-    .print {
+    .print,
+    .stop {
       cursor: pointer;
       position: fixed;
       z-index: 10;
@@ -44,9 +45,11 @@
       background-color: black;
     }
 
-    .print {
+    .print,
+    .stop {
       bottom: 10px;
       padding: 12px;
+      background-color: white;
     }
 
     .print::after {
@@ -55,6 +58,44 @@
       border-top: solid 2px black;
       border-right: solid 2px black;
       transform: translate(-5px, 0) rotate(45deg);
+    }
+
+    .is-printing .print {
+      display: none;
+    }
+
+    .stop {
+      z-index: 13;
+      background-color: white;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .stop::before {
+      position: absolute;
+      content: '';
+      height: 2px;
+      width: 70%;
+      background-color: black;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    .stop::after {
+      position: absolute;
+      content: '';
+      height: 2px;
+      width: 70%;
+      background-color: black;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .is-printing .stop {
+      display: flex;
     }
 
     .menu {
@@ -99,6 +140,7 @@
   <div class="menu menu--show"></div>
   <div class="gui"></div>
   <div class="print"></div>
+  <div class="stop"></div>
   <canvas></canvas>
 </body>
 </html>

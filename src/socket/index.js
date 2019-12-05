@@ -1,6 +1,8 @@
+const { hostname } = window.location
+
 class Socket {
   constructor () {
-    this.socket = new WebSocket('ws://localhost:8080')
+    this.socket = new WebSocket(`ws://${hostname}:8080`)
     this.socket.addEventListener('open', () => {
       this.send('Connection', 'Hello Server!')
     })
