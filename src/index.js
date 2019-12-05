@@ -2,7 +2,7 @@ import Socket from './socket'
 import * as geo from './geo'
 // import * as quickdraw from './quick-draw'
 import * as spirals from './spirals'
-import { getChunks } from './utils'
+import { getChunks, mapChunkItems } from './utils'
 const { NODE_ENV } = process.env
 const DEV_SKETCH = 'tube2'
 
@@ -31,23 +31,15 @@ function updateCanvas (canvas, options) {
   }
 }
 
-async function setupApp (canvas) {
-  const ctx = canvas.getContext('2d')
-  let path = null
-}
-
 async function initialize () {
-  const config = {
-    width: 1000,
-    height: 1000,
-    scale: 1
-  }
-
+  const config = { width: 210, height: 148 }
   const canvas = document.querySelector('canvas')
-  updateCanvas(canvas, config)
   const ctx = canvas.getContext('2d')
+  
+  updateCanvas(canvas, config)
   window.addEventListener('resize', () => {
     updateCanvas(canvas, config)
+    if (sketch) sketch.render()
   })
 
   let sketch = null
@@ -56,21 +48,28 @@ async function initialize () {
   const print = document.querySelector('.print')
   const stop = document.querySelector('.stop')
 
-  nav.addEventListener('click', () => {
+  nav.addEventListener('click', event => {
+    event.stopPropagation()
     menu.classList.toggle('menu--show')
   })
 
-  print.addEventListener('click', () => {
+  print.addEventListener('click', event => {
+    event.stopPropagation()
     if (sketch) {
       document.body.classList.toggle('is-printing')
-      const chunks = getChunks(path, 300, 3)
+      const path = sketch.getPath()
+      const chunks = getChunks(path, 3, 300)
+      const { width, height } = config
       for (const chunk of chunks) {
-        socket.send('path', chunk)
+        socket.send('path', mapChunkItems(chunk, 3, ([x, y, z]) => {
+          return [x * width, y * height, z]
+        }))
       }
     }
   })
 
-  stop.addEventListener('click', () => {
+  stop.addEventListener('click', event => {
+    event.stopPropagation()
     document.body.classList.toggle('is-printing')
     socket.send('stop')
   })
@@ -94,35 +93,37 @@ async function initialize () {
     }
   }
 
+  function getOffsetCoords (event, element) {
+    const { top, left } = element.getBoundingClientRect()
+    const { clientX, clientY } = event
+    return { x: clientX - left, y: clientY - top }
+  }
+
   canvas.addEventListener('click', event => {
     if (events.onClickCallback) {
-      const { top, left } = canvas.getBoundingClientRect()
-      const { clientX: x, clientY: y } = event
-      events.onClickCallback({ x: x - left, y: y - top })
+      const coords = getOffsetCoords(event, canvas)
+      events.onClickCallback({ ...coords, canvas })
     }
   })
 
   canvas.addEventListener('mousedown', event => {
     if (events.onDownCallback) {
-      const { top, left } = canvas.getBoundingClientRect()
-      const { clientX: x, clientY: y } = event
-      events.onDownCallback({ x: x - left, y: y - top })
+      const coords = getOffsetCoords(event, canvas)
+      events.onDownCallback({ ...coords, canvas })
     }
   })
 
   window.addEventListener('mouseup', event => {
     if (events.onUpCallback) {
-      const { top, left } = canvas.getBoundingClientRect()
-      const { clientX: x, clientY: y } = event
-      events.onUpCallback({ x: x - left, y: y - top })
+      const coords = getOffsetCoords(event, canvas)
+      events.onUpCallback({ ...coords, canvas })
     }
   })
 
   canvas.addEventListener('mousemove', event => {
     if (events.onMoveCallback) {
-      const { top, left } = canvas.getBoundingClientRect()
-      const { clientX: x, clientY: y } = event
-      events.onMoveCallback({ x: x - left, y: y - top })
+      const coords = getOffsetCoords(event, canvas)
+      events.onMoveCallback({ ...coords, canvas })
     }
   })
 
@@ -130,9 +131,8 @@ async function initialize () {
     if (events.onDownCallback) {
       const { touches } = event
       const [touch] = touches
-      const { top, left } = canvas.getBoundingClientRect()
-      const { clientX: x, clientY: y } = touch
-      events.onDownCallback({ x: x - left, y: y - top })
+      const coords = getOffsetCoords(touch, canvas)
+      events.onDownCallback({ ...coords, canvas })
     }
   })
 
@@ -140,9 +140,8 @@ async function initialize () {
     if (events.onMoveCallback) {
       const { touches } = event
       const [touch] = touches
-      const { top, left } = canvas.getBoundingClientRect()
-      const { clientX: x, clientY: y } = touch
-      events.onMoveCallback({ x: x - left, y: y - top })
+      const coords = getOffsetCoords(touch, canvas)
+      events.onMoveCallback({ ...coords, canvas })
     }
   })
 
@@ -150,9 +149,8 @@ async function initialize () {
     if (events.onUpCallback) {
       const { touches } = event
       const [touch] = touches
-      const { top, left } = canvas.getBoundingClientRect()
-      const { clientX: x, clientY: y } = touch
-      events.onUpCallback({ x: x - left, y: y - top })
+      const coords = getOffsetCoords(touch, canvas)
+      events.onUpCallback({ ...coords, canvas })
     }
   })
 
@@ -165,14 +163,14 @@ async function initialize () {
 
     menuItem.addEventListener('click', async () => {
       menu.classList.remove('menu--show')
-      sketch = value({ ctx, events, config })
+      sketch = value({ canvas, ctx, events })
       sketch.render()
     })
   }
 
   if (NODE_ENV === 'development') {
     menu.classList.remove('menu--show')
-    sketch = sketches[DEV_SKETCH]({ ctx, events, config })
+    sketch = sketches[DEV_SKETCH]({ canvas, ctx, events })
   }
 
   const socket = new Socket()
@@ -181,13 +179,11 @@ async function initialize () {
     const { type, content } = message
     switch (type) {
       case 'config':
-        const { globalConfig, serverConfig } = content
-        const { MILLIMETER_IN_STEPS } = globalConfig
+        const { serverConfig } = content
         const { ebbConfig } = serverConfig
         const { maxWidth, maxHeight } = ebbConfig
         config.width = maxWidth
         config.height = maxHeight
-        config.scale = MILLIMETER_IN_STEPS
         updateCanvas(canvas, config)
       break;
     }

@@ -32,6 +32,19 @@ export function getChunks (data, itemLength, chunkSize) {
   return chunks
 }
 
+export function mapChunkItems (chunk, itemSize, callback) {
+  const chunkCopy = [...chunk]
+  for (let i = 0; i < chunkCopy.length; i += itemSize) {
+    if (callback) {
+      const item = [...chunkCopy].splice(i, itemSize)
+      const newItem = callback(item)
+      chunkCopy.splice(i, itemSize, ...newItem)
+    }
+  }
+
+  return chunkCopy
+}
+
 export function clamp (val, min, max) {
   return Math.min(Math.max(val, min), max)
 } 
