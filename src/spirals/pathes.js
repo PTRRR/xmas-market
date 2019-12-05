@@ -134,12 +134,12 @@ export function tube2 (ctx, width, height, onDraw) {
         const nextEllipseRotation = Math.atan2(nextY - y, nextX - x)
         const noise = simplex.noise2D(i * 0.01, i * 0.01)
     
-        const segments = 10
+        const segments = 100
         for (let j = 0; j < segments; j++) {
           const t = j / segments
           const angle = t * Math.PI * 2 + i * 0.004 
-          const rx = 50
-          const ry = 300
+          const rx = 5
+          const ry = 80
           const lastPoint = getEllipsePoint(lastX, lastY, rx, ry, angle, ellipseRotation)
           const point = getEllipsePoint(x, y, rx, ry, angle, nextEllipseRotation)
           const { x: segmentX, y: segmentY } = morphPoint(lastPoint, point, t)
