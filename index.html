@@ -15,6 +15,17 @@
       overflow: hidden;
       font-family: Arial, Helvetica, sans-serif;
       font-size: 40px;
+      background-color: rgb(240, 240, 240);
+    }
+
+    canvas {
+      object-fit: cover;
+      background-color: white;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: solid 2px black;
     }
 
     nav,
@@ -22,7 +33,7 @@
     .stop {
       cursor: pointer;
       position: fixed;
-      z-index: 10;
+      z-index: 1001;
       right: 10px;
       width: 50px;
       height: 50px;
@@ -100,6 +111,8 @@
 
     .menu {
       position: fixed;
+      z-index: 1000;
+      background-color: white;
       top: 0;
       left: 0;
       width: 100%;

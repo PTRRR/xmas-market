@@ -49,54 +49,29 @@ export function tube1 (ctx, width, height) {
   ctx.stroke()
 }
 
-export function tube2 (ctx, width, height, onDraw) {
-  const scale = 13
+export function tube2 ({ ctx, events, config }) {
+  const { width, height } = config
   const simplex = new Simplex()
   let clicked = false
   let path = []
   const pathes = []
-  let pathToDraw = []
 
-  window.addEventListener('mousedown', () => {
+  events.onDown(() => {
     clicked = true
   })
 
-  window.addEventListener('touchstart', () => {
-    clicked = true
-  })
-
-  window.addEventListener('mousemove', event => {
+  events.onMove(event => {
     if (clicked) {
-      const { clientX: x, clientY: y } = event
-      const point = { x, y }
-      path.push(point)
-      drawTubes(pathes)
+      path.push(event)
+      render()
       drawPath(path)
     }
   })
 
-  window.addEventListener('touchmove', event => {
-    if (clicked) {
-      const { touches } = event
-      const [{ clientX: x, clientY: y }] = touches
-      const point = { x, y }
-      path.push(point)
-      drawTubes(pathes)
-      drawPath(path)
-    }
-  })
-
-  window.addEventListener('mouseup', () => {
+  events.onUp(() => {
     clicked = false
     pathes.push(path)
-    drawTubes(pathes)
-    path = []
-  })
-
-  window.addEventListener('touchend', () => {
-    clicked = false
-    pathes.push(path)
-    drawTubes(pathes)
+    render()
     path = []
   })
 
@@ -108,11 +83,9 @@ export function tube2 (ctx, width, height, onDraw) {
     ctx.stroke()    
   }
 
-  function drawTubes (pathes) {
-    pathToDraw = []
-    ctx.fillStyle = 'white'
+  function render () {
     ctx.fillRect(0, 0, width, height)
-    
+    const pathToDraw = []
     for (const path of pathes) {
       let started = false
       const simplifiedPath = simplify(path.map(({ x, y }) => {
@@ -143,23 +116,19 @@ export function tube2 (ctx, width, height, onDraw) {
           const lastPoint = getEllipsePoint(lastX, lastY, rx, ry, angle, ellipseRotation)
           const point = getEllipsePoint(x, y, rx, ry, angle, nextEllipseRotation)
           const { x: segmentX, y: segmentY } = morphPoint(lastPoint, point, t)
-          ctx.lineTo(segmentX, segmentY)
           
           if (!started) {
-            pathToDraw.push(segmentX * scale, segmentY * scale, 0)
+            pathToDraw.push(segmentX, segmentY, 0)
             started = true
           }
-          pathToDraw.push(segmentX * scale, segmentY * scale, 1)
+          pathToDraw.push(segmentX, segmentY, 1)
         }
       }
     
       ctx.stroke()
     }
-
-    if (onDraw) {
-      onDraw(pathToDraw)
-    }
+    return pathToDraw
   }
 
-  return pathToDraw
+  return { render }
 }
