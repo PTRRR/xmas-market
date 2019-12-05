@@ -62,7 +62,7 @@ export function tube2 ({ canvas, ctx, events }) {
 
   events.onMove(event => {
     if (clicked) {
-      const { x, y, canvas } = event
+      const { x, y } = event
       const { width, height } = canvas
       
       path.push({
@@ -78,8 +78,8 @@ export function tube2 ({ canvas, ctx, events }) {
   events.onUp(() => {
     clicked = false
     pathes.push(path)
-    render()
     path = []
+    render()
   })
 
   function drawPath (path) {
@@ -135,13 +135,13 @@ export function tube2 ({ canvas, ctx, events }) {
             const lastPoint = getEllipsePoint(lastX, lastY, rx, ry, angle, ellipseRotation)
             const point = getEllipsePoint(x, y, rx, ry, angle, nextEllipseRotation)
             const { x: segmentX, y: segmentY } = morphPoint(lastPoint, point, t)
+            ctx.lineTo(segmentX, segmentY)
             
             if (!started) {
               fullPath.push(segmentX / width, segmentY / height, 0)
               started = true
             }
             fullPath.push(segmentX / width, segmentY / height, 1)
-            ctx.lineTo(segmentX, segmentY)
           }
         }
 
