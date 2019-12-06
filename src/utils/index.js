@@ -108,3 +108,45 @@ export function getPerpendicular (vector) {
   const { x, y } = vector
   return { x: y, y: -x }
 }
+
+export function getLetter (font, char) {
+  return font.find(({ char: fontChar }) => {
+    return fontChar === char
+  })
+} 
+
+export function sign ({ canvas, ctx, font, text, textOptions }) {
+  const { width, height } = canvas
+  const { letterWidth, letterHeight } = textOptions
+  const offsetX = width - (text.length + 1) * letterWidth
+  const offsetY = height - letterHeight - letterHeight
+  const pointsX = 3
+  const pointsY = 4
+  const fullPath = []
+  let letterOffset = 0
+
+  for (const char of text) {
+    const { points } = getLetter(font, char)
+    
+    let init = true
+    ctx.beginPath()
+
+    for (const point of points) {
+      const { x: pointX, y: pointY } = point
+      const x = pointX / pointsX * letterWidth + letterOffset + offsetX
+      const y = pointY / pointsY * letterHeight + offsetY
+      ctx.lineTo(x, y)
+
+      if (init) {
+        fullPath.push(x, y, 0)
+        init = false
+      }
+      fullPath.push(x, y, 1)
+    }
+
+    letterOffset += letterWidth
+    ctx.stroke()
+  }
+
+  return fullPath
+}

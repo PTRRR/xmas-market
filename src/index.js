@@ -1,6 +1,7 @@
 import Socket from './socket'
+import font from './fonts/mdr.json'
 import sketches from './sketches'
-import { getChunks, mapChunkItems } from './utils'
+import { getChunks, mapChunkItems, sign } from './utils'
 const { NODE_ENV } = process.env
 const DEV_SKETCH = 'tube2'
 
@@ -28,6 +29,23 @@ async function initialize () {
   const canvas = document.querySelector('canvas')
   const ctx = canvas.getContext('2d')
   
+  const signatureText = 'hello'
+  const signatureParams = { font, canvas, ctx, textOptions: {
+    letterWidth: 10,
+    letterHeight: 10
+  }}
+
+  function renderSketch (sketch) {
+    if (sketch) {
+      sketch.render()
+    }
+
+    sign({
+      text: signatureText,
+      ...signatureParams
+    })
+  }
+
   updateCanvas(canvas, config)
   window.addEventListener('resize', () => {
     updateCanvas(canvas, config)
@@ -49,8 +67,14 @@ async function initialize () {
     event.stopPropagation()
     if (sketch) {
       document.body.classList.toggle('is-printing')
+      
       const path = sketch.getPath()
-      const chunks = getChunks(path, 3, 300)
+      const signature = sign({
+        text: signatureText,
+        ...signatureParams
+      })
+
+      const chunks = getChunks([...path, ...signature], 3, 300)
       const { width: canvasWidth, height: canvasHeight } = canvas
       const { width, height } = config
       for (const chunk of chunks) {
@@ -110,6 +134,8 @@ async function initialize () {
     if (events.onUpCallback) {
       events.onUpCallback({ canvas })
     }
+
+    renderSketch(sketch)
   })
 
   canvas.addEventListener('mousemove', event => {
@@ -141,6 +167,8 @@ async function initialize () {
     if (events.onUpCallback) {
       events.onUpCallback({ canvas })
     }
+
+    renderSketch(sketch)
   })
 
   for (const [key, value] of Object.entries(sketches)) {
@@ -153,7 +181,7 @@ async function initialize () {
     menuItem.addEventListener('click', async () => {
       menu.classList.remove('menu--show')
       sketch = await value({ canvas, ctx, events })
-      sketch.render()
+      renderSketch(sketch)
     })
   }
 
@@ -161,6 +189,7 @@ async function initialize () {
     if (sketches[DEV_SKETCH]) {
       menu.classList.remove('menu--show')
       sketch = await sketches[DEV_SKETCH]({ canvas, ctx, events })
+      renderSketch(sketch)
     }
   }
 
@@ -175,7 +204,7 @@ async function initialize () {
         config.width = parseFloat(maxWidth)
         config.height = parseFloat(maxHeight)
         updateCanvas(canvas, config)
-        if (sketch) sketch.render()
+        renderSketch(sketch)
         break;
       }
     })
