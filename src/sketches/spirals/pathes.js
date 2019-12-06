@@ -1,5 +1,5 @@
 import { CurveInterpolator } from 'curve-interpolator'
-import { getEllipsePoint, morphPoint } from '../utils'
+import { getEllipsePoint, morphPoint } from '../../utils'
 import simplify from 'simplify-path'
 import Simplex from 'simplex-noise'
 
@@ -137,10 +137,10 @@ export function tube2 ({ canvas, ctx, events }) {
             ctx.lineTo(segmentX, segmentY)
             
             if (!started) {
-              fullPath.push(segmentX / width, segmentY / height, 0)
+              fullPath.push(segmentX, segmentY, 0)
               started = true
             }
-            fullPath.push(segmentX / width, segmentY / height, 1)
+            fullPath.push(segmentX, segmentY, 1)
           }
         }
 

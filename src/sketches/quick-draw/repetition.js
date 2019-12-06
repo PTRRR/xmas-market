@@ -1,6 +1,6 @@
 import snowflakeURL from './datas/full_simplified_snowflake.ndjson'
 import angelsURL from './datas/full_simplified_angel.ndjson'
-import { loadTextFile } from '../utils'
+import { loadTextFile } from '../../utils'
 
 function parseNDJSON (ndjson) {
   return ndjson

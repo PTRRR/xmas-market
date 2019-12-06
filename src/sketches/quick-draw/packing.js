@@ -1,4 +1,4 @@
-import { loadTextFile } from '../utils'
+import { loadTextFile } from '../../utils'
 import angelsURL from './datas/full_simplified_angel.ndjson'
 import candleURL from './datas/full_simplified_candle.ndjson'
 import snowflakeURL from './datas/full_simplified_snowflake.ndjson'

@@ -1,19 +1,11 @@
 import Socket from './socket'
-import * as geo from './geo'
-// import * as quickdraw from './quick-draw'
-import * as spirals from './spirals'
+import sketches from './sketches'
 import { getChunks, mapChunkItems } from './utils'
 const { NODE_ENV } = process.env
 const DEV_SKETCH = 'tube2'
 
-const sketches = {
-  // ...quickdraw,
-  ...geo,
-  ...spirals
-}
-
 function updateCanvas (canvas, options) {
-  const { width, height, scale } = options
+  const { width, height } = options
   const { innerWidth, innerHeight } = window
   const ratio = width / height
   const windowRatio = innerWidth / innerHeight
@@ -59,10 +51,11 @@ async function initialize () {
       document.body.classList.toggle('is-printing')
       const path = sketch.getPath()
       const chunks = getChunks(path, 3, 300)
+      const { width: canvasWidth, height: canvasHeight } = canvas
       const { width, height } = config
       for (const chunk of chunks) {
         socket.send('path', mapChunkItems(chunk, 3, ([x, y, z]) => {
-          return [x * width, y * height, z]
+          return [x / canvasWidth * width, y / canvasHeight * height, z]
         }))
       }
     }
@@ -159,14 +152,16 @@ async function initialize () {
 
     menuItem.addEventListener('click', async () => {
       menu.classList.remove('menu--show')
-      sketch = value({ canvas, ctx, events })
+      sketch = await value({ canvas, ctx, events })
       sketch.render()
     })
   }
 
   if (NODE_ENV === 'development') {
-    menu.classList.remove('menu--show')
-    sketch = sketches[DEV_SKETCH]({ canvas, ctx, events })
+    if (sketches[DEV_SKETCH]) {
+      menu.classList.remove('menu--show')
+      sketch = await sketches[DEV_SKETCH]({ canvas, ctx, events })
+    }
   }
 
   const socket = new Socket()
@@ -175,15 +170,15 @@ async function initialize () {
     const { type, content } = message
     switch (type) {
       case 'config':
-        const { serverConfig } = content
-        const { ebbConfig } = serverConfig
+        const { ebbConfig } = content
         const { maxWidth, maxHeight } = ebbConfig
-        config.width = maxWidth
-        config.height = maxHeight
+        config.width = parseFloat(maxWidth)
+        config.height = parseFloat(maxHeight)
         updateCanvas(canvas, config)
-      break;
-    }
-  })
+        if (sketch) sketch.render()
+        break;
+      }
+    })
 
   socket.send('config')
 }

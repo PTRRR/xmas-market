@@ -1,6 +1,6 @@
 import Simplex from 'simplex-noise'
 import Bezier from 'bezier-js'
-import { clamp, getPointAtLength, getNormalized, getPerpendicular, getPathLength, getEllipsePoint, morphPoint } from '../utils'
+import { clamp, getPointAtLength, getNormalized, getPerpendicular, getPathLength, getEllipsePoint, morphPoint } from '../../utils'
 export * from './pathes'
 
 export async function spiral (ctx, width, height) {

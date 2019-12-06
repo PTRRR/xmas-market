@@ -1,4 +1,4 @@
 .cache
 /dist
 /node_modules
-/src/quick-draw/datas
+/src/sketches/quick-draw/datas
