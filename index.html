@@ -30,7 +30,8 @@
 
     nav,
     .print,
-    .stop {
+    .stop,
+    .reset {
       cursor: pointer;
       position: fixed;
       z-index: 1001;
@@ -105,6 +106,39 @@
       transform: translate(-50%, -50%) rotate(45deg);
     }
 
+    .reset {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      padding: 0;
+    }
+
+    .reset::before {
+      box-sizing: border-box;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      content: '';
+      width: 50%;
+      height: 50%;
+      border: solid 2px black;
+      border-radius: 100%;
+    }
+
+    .reset::after {
+      box-sizing: border-box;
+      position: absolute;
+      top: 50%;
+      left: 62%;
+      transform: translate(0, -50%) rotate(45deg);
+      content: '';
+      width: 20%;
+      height: 20%;
+      border-bottom: solid 2px black;
+      border-right: solid 2px black;
+    }
+
     .is-printing .stop {
       display: flex;
     }
@@ -154,6 +188,7 @@
   <div class="gui"></div>
   <div class="print"></div>
   <div class="stop"></div>
+  <div class="reset"></div>
   <canvas></canvas>
 </body>
 </html>

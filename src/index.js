@@ -3,7 +3,7 @@ import font from './fonts/mdr.json'
 import sketches from './sketches'
 import { getChunks, mapChunkItems, sign } from './utils'
 const { NODE_ENV } = process.env
-const DEV_SKETCH = 'tube2'
+const DEV_SKETCH = 'spiral4'
 
 function updateCanvas (canvas, options) {
   const { width, height } = options
@@ -37,6 +37,9 @@ async function initialize () {
 
   function renderSketch (sketch) {
     if (sketch) {
+      const { width, height } = canvas
+      ctx.fillStyle = 'white'
+      ctx.fillRect(0, 0, width, height)
       sketch.render()
     }
 
@@ -53,10 +56,12 @@ async function initialize () {
   })
 
   let sketch = null
+  let sketchTemplate = null
   const nav = document.querySelector('nav')
   const menu = document.querySelector('.menu')
   const print = document.querySelector('.print')
   const stop = document.querySelector('.stop')
+  const reset = document.querySelector('.reset')
 
   nav.addEventListener('click', event => {
     event.stopPropagation()
@@ -74,7 +79,7 @@ async function initialize () {
         ...signatureParams
       })
 
-      const chunks = getChunks([...path, ...signature], 3, 300)
+      const chunks = getChunks([...path], 3, 300)
       const { width: canvasWidth, height: canvasHeight } = canvas
       const { width, height } = config
       for (const chunk of chunks) {
@@ -89,6 +94,12 @@ async function initialize () {
     event.stopPropagation()
     document.body.classList.toggle('is-printing')
     socket.send('stop')
+  })
+
+  reset.addEventListener('click', async event => {
+    event.stopPropagation()
+    sketch = await sketchTemplate({ canvas, ctx, events })
+    renderSketch(sketch)
   })
 
   const events = {
@@ -180,7 +191,8 @@ async function initialize () {
 
     menuItem.addEventListener('click', async () => {
       menu.classList.remove('menu--show')
-      sketch = await value({ canvas, ctx, events })
+      sketchTemplate = value
+      sketch = await sketchTemplate({ canvas, ctx, events })
       renderSketch(sketch)
     })
   }
@@ -188,7 +200,8 @@ async function initialize () {
   if (NODE_ENV === 'development') {
     if (sketches[DEV_SKETCH]) {
       menu.classList.remove('menu--show')
-      sketch = await sketches[DEV_SKETCH]({ canvas, ctx, events })
+      sketchTemplate = sketches[DEV_SKETCH]
+      sketch = await sketchTemplate({ canvas, ctx, events })
       renderSketch(sketch)
     }
   }

@@ -1,16 +1,5 @@
-export async function diagonals (ctx, width, height) {
-  const fullPath = []
-
-  for (let i = 0; i < 10; i++) {
-    ctx.beginPath()
-    ctx.arc(i, 0, 100, 0, Math.PI * 2)
-    ctx.stroke()
-  }
-
-  return fullPath
-}
-
-export async function spiral (ctx, width, height) {
+export async function test ({ ctx, canvas }) {
+  const { width, height } = canvas
   const cX = width * 0.5
   const cY = height * 0.5
 
