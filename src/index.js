@@ -3,7 +3,7 @@ import font from './fonts/mdr.json'
 import sketches from './sketches'
 import { getChunks, mapChunkItems, sign } from './utils'
 const { NODE_ENV } = process.env
-const DEV_SKETCH = 'spiral4'
+const DEV_SKETCH = 'Mountains'
 
 function updateCanvas (canvas, options) {
   const { width, height } = options

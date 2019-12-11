@@ -111,7 +111,7 @@ export function Mountains ({ ctx, canvas }) {
   let path = []
   const scale = 12.5
   const simplex = new Simplex()
-  const origins = 3
+  const origins = 15
 
   function render () {
     path = []
@@ -119,14 +119,14 @@ export function Mountains ({ ctx, canvas }) {
       const originX = (i / (origins - 1)) * width
       const originY = height
   
-      const trailSegments = 150
-      const trainHeight = height
+      const trailSegments = 200
+      const trailHeight = height
   
       function getPoint (index) {
         const noiseScale = 0.002
         const noiseAmpitude = 0
         const x = originX
-        const y = originY - (index / trailSegments) * trainHeight
+        const y = originY - (index / trailSegments) * trailHeight
         const noise = simplex.noise2D(x * noiseScale, y * noiseScale)
         return { x: x + noise * noiseAmpitude, y: y }
       }
@@ -142,12 +142,12 @@ export function Mountains ({ ctx, canvas }) {
         const noiseScale = 0.0015
         const noise = simplex.noise2D(x * noiseScale, y * noiseScale)
         
-        const spiralSegments = 30
+        const spiralSegments = 40
         for (let k = 0; k < spiralSegments; k++) {
           const percent = k / spiralSegments
           const angle = percent * Math.PI * 2
-          const rx = 10
-          const ry = (noise + 1) * 40 * k * 0.5
+          const rx = 5
+          const ry = (noise) * 20 * k * 0.5
           const lastPoint = getEllipsePoint(lastX, lastY, rx, ry, angle, ellipseRotation)
           const point = getEllipsePoint(x, y, rx, ry, angle, nextEllipseRotation)
           const { x: segmentX, y: segmentY } = morphPoint(lastPoint, point, percent)
