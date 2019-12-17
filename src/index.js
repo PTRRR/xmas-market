@@ -1,9 +1,17 @@
-import Socket from './socket'
+import axios from 'axios'
 import font from './fonts/mdr.json'
 import sketches from './sketches'
-import { getChunks, mapChunkItems, sign } from './utils'
+import { getChunks, sign } from './utils'
 const { NODE_ENV } = process.env
-const DEV_SKETCH = 'Mountains'
+const DEV_SKETCH = 'drawFormat'
+
+const { hostname } = window.location
+const port = 8080
+
+const socket = axios.create({
+  baseURL: `http://${hostname}:${port}`,
+  timeout: 5000
+})
 
 function updateCanvas (canvas, options) {
   const { width, height } = options
@@ -68,7 +76,7 @@ async function initialize () {
     menu.classList.toggle('menu--show')
   })
 
-  print.addEventListener('click', event => {
+  print.addEventListener('click', async event => {
     event.stopPropagation()
     if (sketch) {
       document.body.classList.toggle('is-printing')
@@ -83,9 +91,18 @@ async function initialize () {
       const { width: canvasWidth, height: canvasHeight } = canvas
       const { width, height } = config
       for (const chunk of chunks) {
-        socket.send('path', mapChunkItems(chunk, 3, ([x, y, z]) => {
-          return [x / canvasWidth * width, y / canvasHeight * height, z]
-        }))
+        const path = chunk
+          .filter(point => point)
+          .map(point => {
+            if (point) {
+              let { x, y } = point
+              return { ...point, x: x / canvasWidth * width, y: y / canvasHeight * height }
+            }
+          })
+        
+        const { data } = await socket.post('/length', { path })
+        const { length } = data
+        await socket.post('/print', { path })
       }
     }
   })
@@ -93,7 +110,7 @@ async function initialize () {
   stop.addEventListener('click', event => {
     event.stopPropagation()
     document.body.classList.toggle('is-printing')
-    socket.send('stop')
+    socket.post('/stop')
   })
 
   reset.addEventListener('click', async event => {
@@ -206,23 +223,8 @@ async function initialize () {
     }
   }
 
-  const socket = new Socket()
-  await socket.initialize()
-  socket.onMessage(message => {
-    const { type, content } = message
-    switch (type) {
-      case 'config':
-        const { ebbConfig } = content
-        const { maxWidth, maxHeight } = ebbConfig
-        config.width = parseFloat(maxWidth)
-        config.height = parseFloat(maxHeight)
-        updateCanvas(canvas, config)
-        renderSketch(sketch)
-        break;
-      }
-    })
-
-  socket.send('config')
+  const { data: serverConfig } = await socket.get('/config')
+  console.log(serverConfig)
 }
 
 initialize()
