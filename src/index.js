@@ -1,9 +1,10 @@
 import axios from 'axios'
 import font from './fonts/mdr.json'
 import sketches from './sketches'
-import { getChunks, sign } from './utils'
+import { capitalCase } from 'change-case'
+import { getChunks, sign, clamp } from './utils'
 const { NODE_ENV } = process.env
-const DEV_SKETCH = 'drawFormat'
+const DEV_SKETCH = 'Liquid'
 
 const { hostname } = window.location
 const port = 8080
@@ -13,58 +14,56 @@ const socket = axios.create({
   timeout: 5000
 })
 
-function updateCanvas (canvas, options) {
-  const { width, height } = options
-  const { innerWidth, innerHeight } = window
-  const ratio = width / height
-  const windowRatio = innerWidth / innerHeight
 
-  if (ratio > windowRatio) {
-    canvas.width = innerWidth
-    canvas.height = innerWidth / ratio
-    canvas.style.width = "100%"
-    canvas.style.height = "initial"
-  } else {
-    canvas.width = innerHeight * ratio
-    canvas.height = innerHeight
-    canvas.style.width = "initial"
-    canvas.style.height = "100%"
-  }
-}
 
 async function initialize () {
-  const config = { width: 210, height: 148 }
+  const { data: serverConfig } = await socket.get('/config')
+  const { ebbConfig } = serverConfig
+  const { maxWidth, maxHeight } = ebbConfig
+  const drawingArea = { width: 290, height: 225 }
   const canvas = document.querySelector('canvas')
   const ctx = canvas.getContext('2d')
-  
-  const signatureText = 'hello'
-  const signatureParams = { font, canvas, ctx, textOptions: {
-    letterWidth: 10,
-    letterHeight: 10
-  }}
+  let scaling = 0
 
-  function renderSketch (sketch) {
-    if (sketch) {
+  function updateCanvas (canvas, options) {
+    const { width: canvasWidth, height: canvasHeight } = canvas
+    const { width, height } = options
+    const { innerWidth, innerHeight } = window
+    const ratio = width / height
+    const windowRatio = innerWidth / innerHeight
+  
+    if (ratio > windowRatio) {
+      canvas.width = innerWidth
+      canvas.height = innerWidth / ratio
+      canvas.style.width = "100%"
+      canvas.style.height = "initial"
+      scaling = width / canvasWidth
+    } else {
+      canvas.width = innerHeight * ratio
+      canvas.height = innerHeight
+      canvas.style.width = "initial"
+      canvas.style.height = "100%"
+      scaling = height / canvasHeight
+    }
+  }
+
+  function renderSketchInstance (sketchInstance) {
+    if (sketchInstance) {
       const { width, height } = canvas
       ctx.fillStyle = 'white'
       ctx.fillRect(0, 0, width, height)
-      sketch.render()
+      sketchInstance.render()
     }
-
-    sign({
-      text: signatureText,
-      ...signatureParams
-    })
   }
 
-  updateCanvas(canvas, config)
+  updateCanvas(canvas, drawingArea)
   window.addEventListener('resize', () => {
-    updateCanvas(canvas, config)
-    if (sketch) sketch.render()
+    updateCanvas(canvas, drawingArea)
+    renderSketchInstance(sketchInstance)
   })
 
+  let sketchInstance = null
   let sketch = null
-  let sketchTemplate = null
   const nav = document.querySelector('nav')
   const menu = document.querySelector('.menu')
   const print = document.querySelector('.print')
@@ -78,45 +77,74 @@ async function initialize () {
 
   print.addEventListener('click', async event => {
     event.stopPropagation()
-    if (sketch) {
-      document.body.classList.toggle('is-printing')
-      
-      const path = sketch.getPath()
-      const signature = sign({
-        text: signatureText,
-        ...signatureParams
-      })
+    if (sketchInstance) {
+      document.body.classList.add('is-printing')
 
-      const chunks = getChunks([...path], 3, 300)
       const { width: canvasWidth, height: canvasHeight } = canvas
-      const { width, height } = config
-      for (const chunk of chunks) {
-        const path = chunk
-          .filter(point => point)
-          .map(point => {
-            if (point) {
-              let { x, y } = point
-              return { ...point, x: x / canvasWidth * width, y: y / canvasHeight * height }
-            }
-          })
-        
-        const { data } = await socket.post('/length', { path })
+      const { width, height } = drawingArea
+      const sketchOffset = (maxHeight - height) * 0.5
+      
+      function cleanPath (path) {
+        return path.filter(point => point)
+      }
+
+      function mapPath (path, mapValues = true) {
+        return cleanPath(path).map(point => {
+          const { x, y } = point
+          if (mapValues) {
+            const mappedX = clamp(x / canvasWidth * width, 0, width) + sketchOffset
+            const mappedY = clamp(y / canvasHeight * height, 0, height) + sketchOffset
+            return { ...point, x: mappedX, y: mappedY }
+          } else {
+            return point
+          }
+        })
+      }
+
+      const path = sketchInstance.getPath()
+      const mappedPath = mapPath(path)
+
+      let pathLength = 0
+      const pathChunks = getChunks(mappedPath, 600)
+      for (const pathChunk of pathChunks) {
+        const { data } = await socket.post('/length', { path: pathChunk })
         const { length } = data
-        await socket.post('/print', { path })
+        pathLength += length
+      }
+
+      const fontSize = 2.5
+      const name = 'P.ALBERTI   1/1'
+      const length = pathLength ? `PATH LENGTH ${Math.round(pathLength) / 1000}M` : ''
+      const signature = sign({
+        font,
+        serverConfig,
+        texts: [name, length],
+        textOptions: {
+          letterWidth: fontSize,
+          letterHeight: fontSize
+        }
+      })
+      
+      console.log(`Path length: ${Math.round(pathLength) / 1000}m`)
+      const cleanedSignature = cleanPath(signature, false)
+
+      const chunks = getChunks([...mappedPath, ...cleanedSignature], 300)
+      for (const chunk of chunks) {
+        await socket.post('/print', { path: chunk })
       }
     }
   })
 
   stop.addEventListener('click', event => {
     event.stopPropagation()
-    document.body.classList.toggle('is-printing')
+    document.body.classList.remove('is-printing')
     socket.post('/stop')
   })
 
   reset.addEventListener('click', async event => {
     event.stopPropagation()
-    sketch = await sketchTemplate({ canvas, ctx, events })
-    renderSketch(sketch)
+    sketchInstance = await sketch({ canvas, ctx, events })
+    renderSketchInstance(sketchInstance)
   })
 
   const events = {
@@ -158,12 +186,12 @@ async function initialize () {
     }
   })
 
-  window.addEventListener('mouseup', event => {
+  window.addEventListener('mouseup', () => {
     if (events.onUpCallback) {
       events.onUpCallback({ canvas })
     }
 
-    renderSketch(sketch)
+    renderSketchInstance(sketchInstance)
   })
 
   canvas.addEventListener('mousemove', event => {
@@ -191,40 +219,37 @@ async function initialize () {
     }
   })
 
-  window.addEventListener('touchend', event => {
+  window.addEventListener('touchend', () => {
     if (events.onUpCallback) {
       events.onUpCallback({ canvas })
     }
 
-    renderSketch(sketch)
+    renderSketchInstance(sketchInstance)
   })
 
-  for (const [key, value] of Object.entries(sketches)) {
+  for (const [sketchName, sketchConstructor] of Object.entries(sketches)) {
     const menuItem = document.createElement('div')
     const menuItemTitle = document.createElement('h5')
-    menuItemTitle.innerHTML = key
+    menuItemTitle.innerHTML = sketchName === 'adn' ? 'ADN' : capitalCase(sketchName)
     menuItem.appendChild(menuItemTitle)
     menu.appendChild(menuItem)
 
     menuItem.addEventListener('click', async () => {
       menu.classList.remove('menu--show')
-      sketchTemplate = value
-      sketch = await sketchTemplate({ canvas, ctx, events })
-      renderSketch(sketch)
+      sketch = sketchConstructor
+      sketchInstance = await sketch({ canvas, ctx, events })
+      renderSketchInstance(sketchInstance)
     })
   }
 
   if (NODE_ENV === 'development') {
     if (sketches[DEV_SKETCH]) {
       menu.classList.remove('menu--show')
-      sketchTemplate = sketches[DEV_SKETCH]
-      sketch = await sketchTemplate({ canvas, ctx, events })
-      renderSketch(sketch)
+      sketch = sketches[DEV_SKETCH]
+      sketchInstance = await sketch({ canvas, ctx, events })
+      renderSketchInstance(sketchInstance)
     }
   }
-
-  const { data: serverConfig } = await socket.get('/config')
-  console.log(serverConfig)
 }
 
 initialize()

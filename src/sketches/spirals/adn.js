@@ -3,7 +3,7 @@ import simplify from 'simplify-path'
 import { CurveInterpolator } from 'curve-interpolator'
 import { getEllipsePoint, morphPoint } from '../../utils'
 
-export function smallTubes ({ canvas, ctx, events }) {
+export function adn ({ canvas, ctx, events }) {
   const randomSeed = Math.random()
   let clicked = false
   let path = []
@@ -69,9 +69,7 @@ export function smallTubes ({ canvas, ctx, events }) {
           return [x, y]
         })
 
-        const simplifiedPath = simplify(mappedPath, 10)
-        // simplifiedPath.pop()
-        // simplifiedPath.shift()
+        const simplifiedPath = simplify(mappedPath, 20)
         const spline = new CurveInterpolator(simplifiedPath, 0.01)
       
         const pointsNum = Math.round(spline.length * 0.3)
@@ -86,13 +84,12 @@ export function smallTubes ({ canvas, ctx, events }) {
           const ellipseRotation = Math.atan2(y - lastY, x - lastX)
           const nextEllipseRotation = Math.atan2(nextY - y, nextX - x)
           
-          const noiseSize = 0.005
+          const noiseScale = 0.005
+          const noise = simplex.noise2D((i + seed) * noiseScale, (i + seed) * noiseScale) + 0.3
+          const rx = Math.max(0, noise) * 10 + 5
+          const ry = Math.max(0, noise) * 130 + 5
 
-          const noise = (simplex.noise2D((i + seed) * noiseSize, (i + seed) * noiseSize))
-          const rx = 20
-          const ry = noise * 400
-
-          const nextNoise = (simplex.noise2D((i + 1 + seed) * noiseSize, (i + 1 + seed) * noiseSize)) * 0.5
+          const nextNoise = (simplex.noise2D((i + 1 + seed) * noiseScale, (i + 1 + seed) * noiseScale)) * 0.5
           const nextRx = Math.max(5, nextNoise * 15)
           const nextRy = Math.max(5, nextNoise * 300)
 
@@ -106,10 +103,10 @@ export function smallTubes ({ canvas, ctx, events }) {
             ctx.lineTo(segmentX, segmentY)
             
             if (!started) {
-              fullPath.push(segmentX, segmentY, 0)
+              fullPath.push({ x: segmentX, y: segmentY, z: 0, v: 65 })
               started = true
             }
-            fullPath.push(segmentX, segmentY, 1)
+            fullPath.push({ x: segmentX, y: segmentY, z: 1, v: 65 })
           }
         }
 

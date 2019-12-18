@@ -3,8 +3,8 @@ import simplify from 'simplify-path'
 import { CurveInterpolator } from 'curve-interpolator'
 import { getEllipsePoint, morphPoint } from '../../utils'
 
-export function drawTubes ({ canvas, ctx, events }) {
-  const simplex = new Simplex()
+export function tubesNoise ({ canvas, ctx, events }) {
+  const randomSeed = Math.random()
   let clicked = false
   let path = []
   const pathes = []
@@ -56,7 +56,11 @@ export function drawTubes ({ canvas, ctx, events }) {
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, width, height)
 
+    let index = 0
     for (const path of pathes) {
+      index++
+      const seed = index
+      const simplex = new Simplex(index + randomSeed)
       if (path.length > 0) {
         let started = false
 
@@ -65,7 +69,9 @@ export function drawTubes ({ canvas, ctx, events }) {
           return [x, y]
         })
 
-        const simplifiedPath = simplify(mappedPath, 10)
+        const simplifiedPath = simplify(mappedPath, 20)
+        simplifiedPath.pop()
+        simplifiedPath.shift()
         const spline = new CurveInterpolator(simplifiedPath, 0.01)
       
         const pointsNum = Math.round(spline.length * 0.3)
@@ -79,24 +85,30 @@ export function drawTubes ({ canvas, ctx, events }) {
           
           const ellipseRotation = Math.atan2(y - lastY, x - lastX)
           const nextEllipseRotation = Math.atan2(nextY - y, nextX - x)
-          const noise = simplex.noise2D(i * 0.01, i * 0.1)
-      
+          
+          const noiseScale = 0.005
+          const noise = simplex.noise2D((i + seed) * noiseScale, (i + seed) * noiseScale) + 1.2
+          const rx = 20
+          const ry = noise * 150
+
+          const nextNoise = (simplex.noise2D((i + 1 + seed) * noiseScale, (i + 1 + seed) * noiseScale)) * 0.5
+          const nextRx = Math.max(5, nextNoise * 15)
+          const nextRy = Math.max(5, nextNoise * 300)
+
           const segments = 50
           for (let j = 0; j < segments; j++) {
             const t = j / segments
             const angle = t * Math.PI * 2 + i * 0.004 
-            const rx = 25
-            const ry = width * 0.05
             const lastPoint = getEllipsePoint(lastX, lastY, rx, ry, angle, ellipseRotation)
             const point = getEllipsePoint(x, y, rx, ry, angle, nextEllipseRotation)
             const { x: segmentX, y: segmentY } = morphPoint(lastPoint, point, t)
             ctx.lineTo(segmentX, segmentY)
             
             if (!started) {
-              fullPath.push(segmentX, segmentY, 0)
+              fullPath.push({ x: segmentX, y: segmentY, z: 0, v: 60 })
               started = true
             }
-            fullPath.push(segmentX, segmentY, 1)
+            fullPath.push({ x: segmentX, y: segmentY, z: 1, v: 60 })
           }
         }
 

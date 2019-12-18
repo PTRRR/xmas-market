@@ -1,6 +1,6 @@
 export async function drawFormat ({ ctx, canvas }) {
   let fullpath = []
-  const v = 60
+  const v = 70
 
   function drawCircle (x, y, r) {
     const path = []
@@ -15,7 +15,7 @@ export async function drawFormat ({ ctx, canvas }) {
         path.push({ x: cX, y: cY, z: 0, v })
       }
 
-      path.push({ x: cX, y: cY, z: 1, v })
+      path.push({ x: cX, y: cY, z: 1, v: 90 })
     }
     ctx.stroke()
     return path
@@ -31,16 +31,17 @@ export async function drawFormat ({ ctx, canvas }) {
     ctx.rect(0, 0, x, y)
     ctx.stroke()
     
-    let circle = drawCircle(100, 100, 100)
-    fullpath.push(...circle)
-    circle = drawCircle(width - 100, height - 100, 100)
-    fullpath.push(...circle)
+    // let circle = drawCircle(100, 100, 100)
+    // fullpath.push(...circle)
+    // circle = drawCircle(width - 100, height - 100, 100)
+    // fullpath.push(...circle)
 
-    fullpath.push({ x: 0, y: 0, z: 1, v })
-    fullpath.push({ x, y: 0, z: 1, v })
-    fullpath.push({ x, y, z: 1, v })
-    fullpath.push({ x: 0, y, z: 1, v })
-    fullpath.push({ x: 0, y: 0, z: 1, v })
+    // fullpath.push({ x: 0, y: 0, z: 0, v })
+    // fullpath.push({ x: 0, y: 0, z: 1, v })
+    // fullpath.push({ x, y: 0, z: 1, v })
+    // fullpath.push({ x, y, z: 1, v })
+    // fullpath.push({ x: 0, y, z: 1, v })
+    // fullpath.push({ x: 0, y: 0, z: 1, v })
   }
 
   return {

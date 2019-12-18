@@ -11,12 +11,14 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.19.0",
+    "change-case": "^4.1.0",
     "curve-interpolator": "^1.0.5",
     "koa": "^2.11.0",
     "paper-jsdom": "^0.12.3",
     "parcel-bundler": "^1.12.4",
     "simplex-noise": "^2.4.0",
-    "simplify-path": "^1.1.0"
+    "simplify-path": "^1.1.0",
+    "title-case": "^3.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.7.4",

@@ -14,18 +14,17 @@ export async function loadTextFile (file) {
   })
 }
 
-export function getChunks (data, itemLength, chunkSize) {
-  const maxChunkSize = itemLength * chunkSize
+export function getChunks (data, chunkSize) {
   const chunks = []
   let chunk = []
   
-  for (let i = 0; i < data.length; i += 3) {
-    if (chunk.length >= maxChunkSize) {
+  for (let i = 0; i < data.length; i++) {
+    if (chunk.length >= chunkSize) {
       chunks.push(chunk)
       chunk = []
     }
 
-    chunk.push(data[i], data[i + 1], data[i + 2])
+    chunk.push(data[i])
   }
 
   chunks.push(chunk)
@@ -115,37 +114,52 @@ export function getLetter (font, char) {
   })
 } 
 
-export function sign ({ canvas, ctx, font, text, textOptions }) {
-  const { width, height } = canvas
+export function sign ({ font, texts, textOptions, serverConfig }) {
+  const { ebbConfig } = serverConfig
+  const { maxWidth: width, maxHeight: height } = ebbConfig
   const { letterWidth, letterHeight } = textOptions
-  const offsetX = width - (text.length + 1) * letterWidth
-  const offsetY = height - letterHeight - letterHeight
   const pointsX = 3
   const pointsY = 4
-  const fullPath = []
-  let letterOffset = 0
+  let fullPath = []
+  
+  function renderString (string, offsetX, offsetY) {
+    const path = []
+    let letterOffset = 0
 
-  for (const char of text) {
-    const { points } = getLetter(font, char)
-    
-    let init = true
-    ctx.beginPath()
-
-    for (const point of points) {
-      const { x: pointX, y: pointY } = point
-      const x = pointX / pointsX * letterWidth + letterOffset + offsetX
-      const y = pointY / pointsY * letterHeight + offsetY
-      ctx.lineTo(x, y)
-
-      if (init) {
-        fullPath.push(x, y, 0)
-        init = false
+    for (const char of string.split('').reverse()) {
+      const { points } = getLetter(font, char)
+      
+      let init = true
+      for (const point of points) {
+        const { x: pointX, y: pointY } = point
+        const x = pointY / pointsY * letterHeight + offsetX
+        const y = letterWidth - pointX / pointsX * letterWidth + letterOffset + offsetY
+  
+        if (init) {
+          path.push({ x, y, z: 0, v: 90 })
+          init = false
+        }
+        path.push({ x, y, z: 1, v: 10 })
       }
-      fullPath.push(x, y, 1)
+  
+      letterOffset += letterWidth
+    }
+  
+    return path
+  }
+
+  let textIndex = 0
+  for(const text of texts) {
+    if (text) {
+      const margin = letterHeight * 2
+      const percent = 1 - textIndex / (texts.length - 1)
+      const offsetX = width - margin * 1.6
+      const offsetY = (height - margin * 2) * percent - (text.length + 1) * letterWidth
+      const path = renderString(text, offsetX, Math.max(offsetY, 0) + margin)
+      fullPath = [...fullPath, ...path]
     }
 
-    letterOffset += letterWidth
-    ctx.stroke()
+    textIndex ++
   }
 
   return fullPath

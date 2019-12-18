@@ -80,7 +80,7 @@ export function fatTube ({ canvas, ctx, events }) {
         for (let j = 0; j < segments; j++) {
           const t = j / segments
           const angle = t * Math.PI * 2 + i * 0.004 
-          const rx = 30
+          const rx = 45
           const ry = width * 0.20
           const lastPoint = getEllipsePoint(lastX, lastY, rx, ry, angle, ellipseRotation)
           const point = getEllipsePoint(x, y, rx, ry, angle, nextEllipseRotation)
@@ -88,10 +88,10 @@ export function fatTube ({ canvas, ctx, events }) {
           ctx.lineTo(segmentX, segmentY)
           
           if (!started) {
-            fullPath.push(segmentX, segmentY, 0)
+            fullPath.push({ x: segmentX, y: segmentY, z: 0, v: 80 })
             started = true
           }
-          fullPath.push(segmentX, segmentY, 1)
+          fullPath.push({ x: segmentX, y: segmentY, z: 1, v: 80 })
         }
       }
 

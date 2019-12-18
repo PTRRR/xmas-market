@@ -1,6 +1,10 @@
 import Simplex from 'simplex-noise'
-import { clamp, getPointAtLength, getNormalized, getPerpendicular, getPathLength, getEllipsePoint, morphPoint } from '../../utils'
+import { clamp, getEllipsePoint, morphPoint } from '../../utils'
+export * from './tubeDefault'
 export * from './tubes'
+export * from './fatTube'
+export * from './tubesNoise'
+export * from './adn'
 
 export async function Spin ({ ctx, canvas }) {
   let path = []
@@ -15,18 +19,19 @@ export async function Spin ({ ctx, canvas }) {
     const segments = 30000
     for (let i = 0; i < segments; i++) {
       const offsetX = i / segments * (width - 120)
-      const offsetY = i / segments * height
-      const r = 30 + Math.sin(i * 0.001) * 30
-      const x = Math.cos(i * 0.2) * r + offsetX + 60
-      const y = Math.sin(i * 0.2) * r + height * 0.5 + clamp(Math.tan(i * 0.0012), -height * 0.008, height * 0.008) * 50
+      const r = Math.sin(i * 0.001)
+      const size = 30
+      const minR = r * size + size + 3
+      const x = Math.cos(i * 0.2) * minR + offsetX + 60
+      const y = Math.sin(i * 0.2) * minR + height * 0.5 + clamp(Math.tan(i * 0.0012), -height * 0.008, height * 0.008) * 50
       ctx.lineTo(x, y)
 
       if (i === 0) {
         ctx.moveTo(x, y)
-        path.push(x, y, 0)
+        path.push({ x, y, z: 0, v: 60 })
       }
 
-      path.push(x, y, 1)
+      path.push({ x, y, z: 1, v: 60 })
     }
 
     ctx.stroke()
@@ -38,89 +43,58 @@ export async function Spin ({ ctx, canvas }) {
   }
 }
 
-export async function Pattern ({ ctx, canvas }) {
-  const spiralDefinition = 3000
-  const printMult = 8
-  const columns = 14
+// export async function Pattern ({ ctx, canvas }) {
+//   const spiralDefinition = 3000
+//   const printMult = 8
+//   const columns = 14
   
-  function render () {
-    const { width, height } = canvas
-    const path = []
+//   function render () {
+//     const { width, height } = canvas
+//     const path = []
 
-    for (let c = 0; c < columns + 1; c++) {
-      const offsetX = c / columns * width
-      ctx.beginPath()
-      ctx.moveTo(offsetX, 0)
-      path.push(offsetX * printMult, 0, 0)
+//     for (let c = 0; c < columns + 1; c++) {
+//       const offsetX = c / columns * width
+//       ctx.beginPath()
+//       ctx.moveTo(offsetX, 0)
+//       path.push({ x: offsetX, y: 0, z: 0, v: 50 })
   
-      for (let j = 0; j < spiralDefinition; j++) {
-        const percent = j / spiralDefinition
-        const offsetY = percent * height
-        const r = 60 * (Math.sin(percent * 20 + (Math.PI * c)) * 0.5 + 0.5)
-        const x = Math.cos(offsetY * 1) * r + offsetX
-        const y = Math.sin(offsetY * 1) * r + offsetY
-        ctx.lineTo(x, y)
-        path.push(x * printMult, y * printMult, 1)
-      }
+//       for (let j = 0; j < spiralDefinition; j++) {
+//         const percent = j / spiralDefinition
+//         const offsetY = percent * height
+//         const r = 60 * (Math.sin(percent * 20 + (Math.PI * c)) * 0.5 + 0.5)
+//         const x = Math.cos(offsetY * 1) * r + offsetX
+//         const y = Math.sin(offsetY * 1) * r + offsetY
+//         ctx.lineTo(x, y)
+//         path.push({ x, y, z: 1, v: 50 })
+//       }
   
-      ctx.stroke()
-    }
+//       ctx.stroke()
+//     }
 
-    return path
-  }
+//     return path
+//   }
 
-  return {
-    render,
-    getPath: () => render()
-  }
-}
+//   return {
+//     render,
+//     getPath: () => render()
+//   }
+// }
 
-export async function Pattern2 ({ ctx, canvas }) {
-  const { width, height } = canvas
-  var simplex = new Simplex()
-  const path = []
-  const spiralDefinition = 3000
-  const printMult = 10
-
-  const columns = 5
-  for (let c = 0; c < columns + 1; c++) {
-    const offsetX = c / columns * width
-    ctx.beginPath()
-    ctx.moveTo(offsetX, 0)
-    path.push(offsetX * printMult, 0, 0)
-
-    for (let j = 0; j < spiralDefinition; j++) {
-      const percent = j / spiralDefinition
-      const offsetY = percent * height
-      const noise = simplex.noise2D(c * 0.004, offsetY * 0.003)
-      const r = 60 * (Math.sin(percent * 20 + (Math.PI * c)) * 0.5 + 0.5) + 10
-      const x = Math.cos(offsetY * 1) * r + offsetX + noise * 100
-      const y = Math.sin(offsetY * 1) * r + offsetY
-      ctx.lineTo(x, y)
-      path.push(x * printMult, y * printMult, 1)
-    }
-
-    ctx.stroke()
-  }
-
-  return path
-}
-
-export function Mountains ({ ctx, canvas }) {
+export function Liquid ({ ctx, canvas }) {
   const { width, height } = canvas
   let path = []
   const scale = 12.5
   const simplex = new Simplex()
-  const origins = 15
+  const origins = 5
 
   function render () {
     path = []
     for (let i = 0; i < origins; i++) {
-      const originX = (i / (origins - 1)) * width
-      const originY = height
+      const originX = (i / (origins - 1)) * width * 0.8 + width * 0.1
+      const originY = height - 20
   
       const trailSegments = 200
-      const trailHeight = height
+      const trailHeight = height - 30
   
       function getPoint (index) {
         const noiseScale = 0.002
@@ -139,26 +113,30 @@ export function Mountains ({ ctx, canvas }) {
         const { x: nextX, y: nextY } = getPoint(j + 1)
         const ellipseRotation = Math.atan2(y - lastY, x - lastX)
         const nextEllipseRotation = Math.atan2(nextY - y, nextX - x)
-        const noiseScale = 0.0015
-        const noise = simplex.noise2D(x * noiseScale, y * noiseScale)
+        const noiseScale = 0.002
+        const noise = simplex.noise2D(x * noiseScale, y * noiseScale) + 1
         
-        const spiralSegments = 40
+        const spiralSegments = 50
         for (let k = 0; k < spiralSegments; k++) {
           const percent = k / spiralSegments
           const angle = percent * Math.PI * 2
-          const rx = 5
-          const ry = (noise) * 20 * k * 0.5
+          const rx = 20
+          const maxDist = Math.min(originX, width - originX)
+          let ry = (noise) * 200
+          ry = clamp(ry, 0, maxDist)
           const lastPoint = getEllipsePoint(lastX, lastY, rx, ry, angle, ellipseRotation)
           const point = getEllipsePoint(x, y, rx, ry, angle, nextEllipseRotation)
-          const { x: segmentX, y: segmentY } = morphPoint(lastPoint, point, percent)
+          let { x: segmentX, y: segmentY } = morphPoint(lastPoint, point, percent)
           ctx.lineTo(segmentX, segmentY)
+
+          segmentX = clamp(segmentX, 0, width)
           
           if (initTrail) {
-            path.push(segmentX * scale, segmentY * scale, 0)
+            path.push({ x: segmentX, y: segmentY, z: 0, v: 80 })
             initTrail = false
           }
   
-          path.push(segmentX * scale, segmentY * scale, 1)
+          path.push({ x: segmentX, y: segmentY, z: 1, v: 80 })
         }
       }
       ctx.stroke()
